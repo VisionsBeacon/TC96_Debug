@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     //注册C++类
     RegisterToQml::getInstance();
 
-    //启用Can服务
+    //启用Can服务1
 
 
     QQmlApplicationEngine engine;
