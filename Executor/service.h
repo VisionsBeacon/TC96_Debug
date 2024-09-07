@@ -105,6 +105,8 @@ private slots:
     void onAsyncComplete(FUNNAME, QJsonObject);
     //开启can服务
     void onSigStartLanServer();
+    //接收can指令
+    void onSigSendNormalCanCommand(int commandType, const QJsonObject &obj);
 
 private:
     static Service* m_Ctrl;

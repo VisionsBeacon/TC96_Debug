@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import DataHandler 1.0
-// import Service 1.0
 
 Item {
 
@@ -19,12 +18,17 @@ Item {
 
     //指令类型
     enum CommandTypeNum {
-        Reset = 0,
-        Open_Gate,
-        Close_Gate,
-        Send_Rdml,
-        Start,
-        Stop
+        RESET = 0,      //复位
+        START,          //方案开始运行
+        STOP,           //方案停止
+        LID_OPEN,       //开盖
+        LID_CLOSE,      //关盖
+        HEAT_LID_ON,    //热盖
+        HEAT_LID_OFF,   //关热盖
+        SET_RDML,       //设置方案
+        SET_PARAM,      //设置参数
+        READ_PARAM,     //读取参数
+        TEMPERATURE     //温度
     }
 
     //读取温度计时器
@@ -58,6 +62,9 @@ Item {
     //默认连接类型
     property int currentConnectionType: Config.ConnectionTypeNum.None
 
+    //是否成功连接设备
+    property bool isConnected: false
+
     //此时选中的设备名称
     property string currentCheckedDeviceName: ""
 
@@ -72,6 +79,16 @@ Item {
 
     //当前读取温度的序号
     property int currentIndex: 0
+
+    // //存储指令与其索引
+    // property var commandMap: ({
+    //         "复位":     Config.CommandTypeNum.FUN_RESET,
+    //         "开盖":     Config.CommandTypeNum.FUN_LID_OPEN,
+    //         "关盖":     Config.CommandTypeNum.FUN_LID_CLOSE,
+    //         "发送方案": Config.CommandTypeNum.FUN_SET_RDML,
+    //         "开始":     Config.CommandTypeNum.FUN_START,
+    //         "停止":     Config.CommandTypeNum.FUN_STOP
+    // })
 
 
     /*******************************信号*********************************/
@@ -107,11 +124,10 @@ Item {
             console.log(qsTr("使用Lan连接模式"))
 
             //读取配置文件
-            // DataHandler.loadingDevicesConfig()
+            DataHandler.loadingDevicesConfig()
 
             //启动Lan服务
             DataHandler.startLanServer()
-
         }
     }
 
@@ -152,7 +168,7 @@ Item {
         return createObjectWithProperties(device, null, properties)
     }
 
-    //根据当前组合的RDML
+    //返回当前组合的RDML
     function getRdmlByCanId(deviceCanId) {
         var pcr = Config.pcrMap[deviceCanId]
         return pcr.toRdml();
@@ -185,38 +201,39 @@ Item {
         }
     }
 
+    //根据指令名称返回其索引值
+    // function getCommandType(commandStr) {
+    //     var type = Config.commandMap[commandStr]
+    //     return type
+    // }
+
 
 
     /************************************** can接口 **************************************/
 
-    //连接can通信
-    function connecteToCanOpen() {
-
-
-
-        return true
-    }
 
     //下发can指令，参数1："TC01"，参数2："reset"
-    function executeCommand(deviceName, commandStr, rdmlJson) {
+    function executeCommand(deviceId, commandStr, rdmlJson) {
 
-        var commandEng = ""
+        var commandType = Config.CommandTypeNum.RESET
 
         if(commandStr === "复位") {
-            commandEng = "/device/DevInit"
+            commandType = Config.CommandTypeNum.RESET
         } else if(commandStr === "开盖") {
-            commandEng = "/device/OpenLid"
+            commandType = Config.CommandTypeNum.LID_OPEN
         } else if(commandStr === "关盖") {
-            commandEng = "/device/CloseLid"
+            commandType = Config.CommandTypeNum.LID_CLOSE
         } else if(commandStr === "发送方案") {
-            commandEng = "/device/setRdml"
+            commandType = Config.CommandTypeNum.SET_RDML
         } else if(commandStr === "开始") {
-            commandEng = "/device/PCRStart"
+            commandType = Config.CommandTypeNum.START
         } else if(commandStr === "停止") {
-            commandEng = "/device/PCRStop"
+            commandType = Config.CommandTypeNum.STOP
         }
 
-        DataHandler.sendCommand(deviceName, commandEng, rdmlJson)
+        console.log("deviceId: ", deviceId, ", commandType: ", commandType)
+
+        DataHandler.sendCommand(deviceId, commandType, rdmlJson)
     }
 
     //读取单个PCR温度

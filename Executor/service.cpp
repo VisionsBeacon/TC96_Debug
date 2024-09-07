@@ -1,17 +1,15 @@
 #include "service.h"
+#include "signalmanager.h"
+#include "datahandler.h"
 #include "acturator.h"
 #include "waiting_list.h"
 #include "executorfactory.h"
-#include "../Config/datahandler.h"
 
 
 
 #include <QThread>
 
 // #include <QtConcurrent/QtConcurrent>
-
-// #include "Frame/messagedialog.h"
-// #include "Frame/signalmanager.h"
 
 
 Service* Service::m_Ctrl = nullptr;
@@ -53,7 +51,8 @@ void Service::init()
 void Service::initConnect()
 {
     connect(this, &Service::AsyncComplete, this, &Service::onAsyncComplete);
-    connect(DataHandler::getInstance(), &DataHandler::sigStartLanServer, this, &Service::onSigStartLanServer);
+    connect(sigManager, &SignalManager::sigStartLanServer, this, &Service::onSigStartLanServer);
+    connect(sigManager, &SignalManager::sigSendNormalCanCommand, this, &Service::onSigSendNormalCanCommand);
 }
 
 //初始化
@@ -62,14 +61,14 @@ void Service::CanopenInit()
     TimerInit();
     InitSdoClients();
 
-    //打开can设备
     board.busname = (char *)DataHandler::getInstance()->zlg_can_ip().toStdString().c_str();
 
     if(canOpen(&board, &eds_master_Data) == 0)
     {
-        //打开can设备失败
-        qDebug() << "打开can设备失败";
-        exit(0);
+        //打开Lan服务失败
+        qDebug() << "打开Lan服务失败";
+        sigManager->sigResultStartLanServer(false);
+        return;
     }
 
     //启动定时器
@@ -81,6 +80,10 @@ void Service::CanopenInit()
 
     setNodeId(&eds_master_Data, 0x01);
     setState(&eds_master_Data, Initialisation);
+
+    //打开Lan服务成功
+    qDebug() << "打开Lan服务成功";
+    sigManager->sigResultStartLanServer(true);
 }
 
 void Service::InitSdoClients()
@@ -114,17 +117,7 @@ void Service::InitSdoClients()
 
 void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
 {
-    //统一取index和param {"can_id","param"}
-    //提示信息
-    //调试一下
-   // qDebug()<<"发了一个指令，到这里来了"<<endl;
-
-   //Q_EMIT SignalManager::instance()->AddMessage("发了一个指令，到这里来了");
-   //return;
-
     QString can_id = param["can_id"].toString();
-
-    //先根据id转换为name
     QString name = DataHandler::getInstance()->getDeviceNameById(can_id.toInt());
 
     switch(funName)
@@ -146,10 +139,10 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
         {
             result = "设备不在线";
         }
-        QString func="初始化 ";
+        // QString func="初始化 ";
         // SignalManager::instance()->AddMessage(func+result.c_str());
-    }
         break;
+    }
     case FUN_START:
     {
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "start");
@@ -168,10 +161,10 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
             result = "设备不在线";
         }
 
-        QString func="方案运行 ";
+        // QString func="方案运行 ";
         // SignalManager::instance()->AddMessage(func+result.c_str());
-    }
         break;
+    }
     case FUN_STOP:
     {
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "stop");
@@ -189,10 +182,10 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
         {
             result = "设备不在线";
         }
-        QString func="方案停止 ";
+        // QString func="方案停止 ";
         // SignalManager::instance()->AddMessage(func+result.c_str());
-    }
         break;
+    }
     case FUN_LID_OPEN:
     {
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "lid_open");
@@ -211,10 +204,10 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
             result = "设备不在线";
         }
 
-        QString func = "开盖 ";
+        // QString func = "开盖 ";
         // SignalManager::instance()->AddMessage(func + result.c_str());
-    }
         break;
+    }
     case FUN_LID_CLOSE:
     {
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "lid_close");
@@ -233,11 +226,10 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
         {
             result = "设备不在线";
         }
-        QString func="关盖 ";
+        // QString func="关盖 ";
         // SignalManager::instance()->AddMessage(func+result.c_str());
-
-    }
         break;
+    }
     case FUN_SET_PARAM:
     {
         auto e1 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "heatlidpid");
@@ -248,24 +240,24 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
         auto e6 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "cyclingcompensation");
 
         //取出需要写的值
-        QJsonObject value=param["param"].toObject();
-        int32_t block_kp=value["block_kp"].toInt();
-        int32_t block_kd=value["block_kd"].toInt();
-        int32_t block_ki=value["block_ki"].toInt();
-        double lid_move_distance=value["lid_distance"].toString().toDouble();
+        QJsonObject value = param["param"].toObject();
+        int32_t block_kp = value["block_kp"].toInt();
+        int32_t block_kd = value["block_kd"].toInt();
+        int32_t block_ki = value["block_ki"].toInt();
+        double lid_move_distance = value["lid_distance"].toString().toDouble();
 
         //int32_t can_id=value["can_id"].toInt();
-        int32_t baundrate=value["baundrate"].toInt();
-        int32_t block1=value["block1"].toInt();
-        int32_t block2=value["block2"].toInt();
-        int32_t block3=value["block3"].toInt();
-        int32_t heatLid=value["heatLid"].toInt();
-        int32_t radiator=value["radiator"].toInt();
-        int32_t k=value["k"].toInt();
-        int32_t b=value["b"].toInt();
-        int32_t heatlid_kp=value["heatlid_kp"].toInt();
-        int32_t heatlid_ki=value["heatlid_ki"].toInt();
-        int32_t heatlid_kd=value["heatlid_kd"].toInt();
+        int32_t baundrate = value["baundrate"].toInt();
+        int32_t block1 = value["block1"].toInt();
+        int32_t block2 = value["block2"].toInt();
+        int32_t block3 = value["block3"].toInt();
+        int32_t heatLid = value["heatLid"].toInt();
+        int32_t radiator = value["radiator"].toInt();
+        int32_t k = value["k"].toInt();
+        int32_t b = value["b"].toInt();
+        int32_t heatlid_kp = value["heatlid_kp"].toInt();
+        int32_t heatlid_ki = value["heatlid_ki"].toInt();
+        int32_t heatlid_kd = value["heatlid_kd"].toInt();
         // 运行
         std::string result1,result2,result3,result4,result5,result6 = "OK";
 
@@ -277,7 +269,7 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
             }
             else
             {
-                // QThread::msleep(200);  //延迟; //加一个延时，避免信号量阻塞未取到值
+                QThread::msleep(200);
             }
 
         }
@@ -285,8 +277,8 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
         {
             result3 = "NO_DEVICE";
         }
-    }
         break;
+    }
     case FUN_SET_RDML:
     {
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "set_schema");
@@ -306,9 +298,11 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
         {
             result = "设备不在线";
         }
-        QString func="方案设置 ";
+        // QString func="方案设置 ";
         // SignalManager::instance()->AddMessage(func+result.c_str());
+        break;
     }
+    default:
         break;
     }
 }
@@ -319,23 +313,30 @@ void Service::onAsyncComplete(FUNNAME name, QJsonObject var)
     // QtConcurrent::run(this, &Service::InterfaceComplete, name, var);
 }
 
+//开启can服务
 void Service::onSigStartLanServer()
 {
-    qDebug() << 111;
-
     CanopenInit();
+}
+
+//接收can指令
+void Service::onSigSendNormalCanCommand(int commandType, const QJsonObject &obj)
+{
+    auto future = QtConcurrent::run([this, commandType, obj]() {
+        this->InterfaceComplete(static_cast<FUNNAME>(commandType), obj);
+    });
 }
 
 void Service::OnHeartbeatError(CO_Data *d, uint8_t heartbeatID)
 {
-    qDebug() << "Heartbeat error on node"<< (int)heartbeatID;
+    qDebug() << "Heartbeat error on node" << (int)heartbeatID;
     std::thread t(ProcessEvents, heartbeatID, 0);
     t.detach();
 }
 
 void Service::OnSlaveBootup(CO_Data *d, uint8_t nodeId)
 {
-    qDebug() << "BOOT UP"<< (int)nodeId;
+    qDebug() << "BOOT UP" << (int)nodeId;
     std::thread t(ProcessEvents, nodeId, 1);
     t.detach();
 }

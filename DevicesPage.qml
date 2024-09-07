@@ -73,11 +73,12 @@ Rectangle {
                                     }
 
                                     console.log("设备名称：", Config.currentCheckedDeviceName, "，执行动作：", column.children[i].text);
+
                                     //添加日志
                                     OperateLogManager.addNewOperationRecord(Config.currentCheckedDeviceName, column.children[i].text)
 
-                                    //发送http
-                                    Config.executeCommand(Config.currentCheckedDeviceName, column.children[i].text, rdmlJson)
+                                    //发送can指令
+                                    Config.executeCommand(Config.currentCheckedDeviceCanId, column.children[i].text, rdmlJson)
 
                                     break;
                                 }
@@ -115,11 +116,11 @@ Rectangle {
             width: parent.width
             deviceName: model.deviceName
             deviceCanId: model.deviceCanId
-        }
 
-        onCountChanged: {
-            if (listView.count > 0 && listView.count === Config.deviceList.count) {
-                listView.itemAtIndex(0).checked = true
+            Component.onCompleted: {
+                if (index === 0) {
+                    checked = true;
+                }
             }
         }
     }

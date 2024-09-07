@@ -14,6 +14,7 @@ qt_add_qml_module(Config
 
     SOURCES datahandler.h datahandler.cpp
     SOURCES registertoqml.h registertoqml.cpp
+    SOURCES signalmanager.h signalmanager.cpp
 )
 
 #链接库

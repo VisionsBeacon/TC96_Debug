@@ -37,25 +37,41 @@ Window {
         dlg.open()
     }
 
-    //接收读取配置文件结果
+    //接收是否连接上设备
     Connections {
         target: DataHandler
-        function onParseDevicesConfigCompleted(result) {
+        function onSigResultStartLanServer(result) {
 
-            Config.handleParseDevicesConfigResult(result)
+            if(isDebugMode) {
+                Config.isConnected = !result
+            } else {
+                Config.isConnected = result
+            }
 
-            var msg = qsTr("读取配置文件成功！")
-            if(!result) {
-                msg = qsTr("读取配置文件失败！")
+            //连接成功则创建PCR组件
+            Config.handleParseDevicesConfigResult(Config.isConnected)
+
+            var msg = qsTr("Lan服务启动成功！")
+            if(!Config.isConnected) {
+                msg = qsTr("Lan服务启动失败！")
             }
 
             var dlg = HcMessageDlg.createMessageDlg(mainWindow, msg)
             dlg.onlyConfirm = true
-            dlg.open()
 
-            stackLayout.currentIndex = 1
+            dlg.accepted.connect(function() {
+                if(Config.isConnected) {
+                    //连接成功则跳转页面
+                    stackLayout.currentIndex = 1
+                } else {
+                    Qt.quit()
+                }
+            })
+
+            dlg.open()
         }
     }
+
 
 
     /********************绘制ui********************/
@@ -81,10 +97,6 @@ Window {
 
     Component.onCompleted: {
         stackLayout.currentIndex = 0
-
-        //连接can通信
-        if(Config.connecteToCanOpen()) {
-            showSelectDiag()
-        }
+        showSelectDiag()
     }
 }

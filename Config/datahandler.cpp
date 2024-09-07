@@ -1,4 +1,5 @@
 #include "datahandler.h"
+#include "signalmanager.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -11,7 +12,21 @@ DataHandler* DataHandler::m_dataHandler = nullptr;
 DataHandler::DataHandler(QObject *parent)
     : QObject{parent}
 {
+    init();
+}
+
+
+/***************************正常函数***************************/
+
+void DataHandler::init()
+{
+    initConnect();
+}
+
+void DataHandler::initConnect()
+{
     connect(&m_watcher, &QFutureWatcher<bool>::finished, this, &DataHandler::onFinished);
+    connect(sigManager, &SignalManager::sigResultStartLanServer, this, &DataHandler::onSigResultStartLanServer);
 }
 
 DataHandler *DataHandler::getInstance()
@@ -22,13 +37,6 @@ DataHandler *DataHandler::getInstance()
     }
 
     return m_dataHandler;
-}
-
-//解析配置文件
-void DataHandler::loadingDevicesConfig()
-{
-    QFuture<bool> future = QtConcurrent::run(&DataHandler::parseDevicesConfig, this);
-    m_watcher.setFuture(future);
 }
 
 //解析配置文件
@@ -76,26 +84,9 @@ bool DataHandler::parseDevicesConfig()
     return true;
 }
 
-//执行完任务后调用
-void DataHandler::onFinished()
-{
-    Q_EMIT parseDevicesConfigCompleted(m_watcher.result());
-}
-
 QString DataHandler::zlg_can_ip() const
 {
     return m_zlg_can_ip;
-}
-
-QVariantMap DataHandler::getDeviceMap() const
-{
-    return m_deviceMap;
-}
-
-//开启Lan服务
-void DataHandler::startLanServer()
-{
-    Q_EMIT sigStartLanServer();
 }
 
 int DataHandler::getCanIdForDevice(const QString &name)
@@ -115,4 +106,64 @@ QString DataHandler::getDeviceNameById(int id)
     }
 
     return "";
+}
+
+
+/***************************QML接口函数***************************/
+
+
+//解析配置文件
+void DataHandler::loadingDevicesConfig()
+{
+    QFuture<bool> future = QtConcurrent::run(&DataHandler::parseDevicesConfig, this);
+    m_watcher.setFuture(future);
+}
+
+QVariantMap DataHandler::getDeviceMap() const
+{
+    return m_deviceMap;
+}
+
+//开启Lan服务
+void DataHandler::startLanServer()
+{
+    Q_EMIT sigManager->sigStartLanServer();
+}
+
+//发送Can指令
+void DataHandler::sendCommand(int canId, int commandType, const QString &rdmlJson)
+{
+    if(rdmlJson.isEmpty())
+    {
+        //不发送方案的情况
+        QJsonObject jsonObject;
+        jsonObject.insert("can_id", QString::number(canId));
+        jsonObject.insert("param", "");
+
+        Q_EMIT sigManager->sigSendNormalCanCommand(commandType, jsonObject);
+    }
+    else
+    {
+        //发送方案
+
+    }
+
+}
+
+
+
+
+/***************************槽函数***************************/
+
+
+//接收读取配置文件结果
+void DataHandler::onFinished()
+{
+    // Q_EMIT parseDevicesConfigCompleted(m_watcher.result());
+}
+
+//接收开启Lan服务结果
+void DataHandler::onSigResultStartLanServer(bool result)
+{
+    Q_EMIT sigResultStartLanServer(result);
 }

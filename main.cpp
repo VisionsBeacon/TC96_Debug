@@ -4,6 +4,7 @@
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 
 int main(int argc, char *argv[])
 {
@@ -18,7 +19,15 @@ int main(int argc, char *argv[])
     //初始化Server
     Service::instance();
 
+#ifdef QT_DEBUG
+    bool isDebugMode = true;
+#else
+    bool isDebugMode = false;
+#endif
+
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("isDebugMode", isDebugMode);
+
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,

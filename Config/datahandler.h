@@ -14,7 +14,11 @@ class DataHandler : public QObject
 
 public:
     explicit DataHandler(QObject *parent = nullptr);
+    void init();
+    void initConnect();
     static DataHandler *getInstance();
+
+    /***************************QML接口函数***************************/
 
     //加载配置文件
     Q_INVOKABLE void loadingDevicesConfig();
@@ -24,6 +28,12 @@ public:
 
     //开启Lan服务
     Q_INVOKABLE void startLanServer();
+
+    //发送Can指令
+    Q_INVOKABLE void sendCommand(int canId, int commandType, const QString &rdmlJson);
+
+
+    /***************************正常函数***************************/
 
     //解析配置文件
     bool parseDevicesConfig();
@@ -39,13 +49,14 @@ public:
 signals:
     //解析配置文件完成
     void parseDevicesConfigCompleted(bool);
-
-    //开启Lan服务
-    void sigStartLanServer();
-
+    //打开Lan服务结果
+    void sigResultStartLanServer(bool);
 
 private slots:
     void onFinished();
+
+    //接收开启Lan服务结果
+    void onSigResultStartLanServer(bool result);
 
 
 private:
