@@ -92,6 +92,12 @@ QVariantMap DataHandler::getDeviceMap() const
     return m_deviceMap;
 }
 
+//开启Lan服务
+void DataHandler::startLanServer()
+{
+    Q_EMIT sigStartLanServer();
+}
+
 int DataHandler::getCanIdForDevice(const QString &name)
 {
     return m_deviceMap["name"].toInt();

@@ -6,18 +6,20 @@ set(CMAKE_CXX_STANDARD 17)
 
 file(GLOB_RECURSE Executor_src "./*.cpp" "./*.h")
 
-# 添加头文件，方便包含头文件
-include_directories(
-    ../third_party/include/win32/
-    ../third_party/include/
+add_library(Executor STATIC ${Executor_src})
+
+# 添加 third_party 的头文件目录，确保能包含 third_party 的头文件
+target_include_directories(Executor PRIVATE
+    ${CMAKE_SOURCE_DIR}/third_party/include/win32
+    ${CMAKE_SOURCE_DIR}/third_party/include
 )
 
-add_library(Executor STATIC
-    ${Executor_src}
-)
+# 添加 eds 的头文件目录，确保能包含 eds 的头文件
+target_include_directories(Executor PRIVATE ${CMAKE_SOURCE_DIR}/eds)
 
 target_link_libraries(Executor
     PRIVATE Qt${QT_VERSION_MAJOR}::Core
     PRIVATE Qt${QT_VERSION_MAJOR}::Gui
-    third_party
+    PRIVATE third_party
+    PRIVATE eds
 )

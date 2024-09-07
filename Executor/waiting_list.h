@@ -1,12 +1,12 @@
 #pragma once
-#include <semaphore.h>
 
-#include <list>
+#include <QSemaphore>
+
 struct wait_item {
   int can_id;
   int index;
   int subindex;
-  sem_t *sem;
+  QSemaphore *sem;
   int result;
 };
 

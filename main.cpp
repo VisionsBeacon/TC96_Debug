@@ -1,5 +1,6 @@
 #include "Config/registertoqml.h"
 #include "log/db/logmng.h"
+#include "Executor/service.h"
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
@@ -14,8 +15,8 @@ int main(int argc, char *argv[])
     //注册C++类
     RegisterToQml::getInstance();
 
-    //启用Can服务1
-
+    //初始化Server
+    Service::instance();
 
     QQmlApplicationEngine engine;
     QObject::connect(

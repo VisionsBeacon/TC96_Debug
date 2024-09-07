@@ -90,22 +90,23 @@ Rectangle {
         }
     }
 
-    Connections {
-        target: HttpClient
+    //读取温度
+    // Connections {
+    //     target: HttpClient
 
-        function onSandTemperature(device, temperature) {
-            if(!showLine || device !== deviceName) {
-                return
-            } else {
-                x_Axis += 2
-                if(x_Axis > xAxis.max) {
-                    xAxis.max = x_Axis
-                }
+    //     function onSandTemperature(device, temperature) {
+    //         if(!showLine || device !== deviceName) {
+    //             return
+    //         } else {
+    //             x_Axis += 2
+    //             if(x_Axis > xAxis.max) {
+    //                 xAxis.max = x_Axis
+    //             }
 
-                root.block1Line.append(x_Axis, temperature);
-            }
-        }
-    }
+    //             root.block1Line.append(x_Axis, temperature);
+    //         }
+    //     }
+    // }
 
     onShowLineChanged: {
         if(!showLine) {

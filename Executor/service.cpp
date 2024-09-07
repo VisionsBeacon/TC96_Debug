@@ -2,8 +2,9 @@
 #include "acturator.h"
 #include "waiting_list.h"
 #include "executorfactory.h"
-#include "../eds/eds_master.h"
 #include "../Config/datahandler.h"
+
+
 
 #include <QThread>
 
@@ -11,8 +12,6 @@
 
 // #include "Frame/messagedialog.h"
 // #include "Frame/signalmanager.h"
-
-
 
 
 Service* Service::m_Ctrl = nullptr;
@@ -31,11 +30,9 @@ const QVector<Service::reg_s> Service::warning_regs = {
     {0x2600, 0x05}, {0x2600, 0x03}
 };
 
-
-
 Service::Service(QObject *parent): QObject(parent)
 {
-    initConnect();
+    init();
 }
 
 Service *Service::instance()
@@ -48,9 +45,15 @@ Service *Service::instance()
     return m_Ctrl;
 }
 
+void Service::init()
+{
+    initConnect();
+}
+
 void Service::initConnect()
 {
     connect(this, &Service::AsyncComplete, this, &Service::onAsyncComplete);
+    connect(DataHandler::getInstance(), &DataHandler::sigStartLanServer, this, &Service::onSigStartLanServer);
 }
 
 //初始化
@@ -316,6 +319,13 @@ void Service::onAsyncComplete(FUNNAME name, QJsonObject var)
     // QtConcurrent::run(this, &Service::InterfaceComplete, name, var);
 }
 
+void Service::onSigStartLanServer()
+{
+    qDebug() << 111;
+
+    CanopenInit();
+}
+
 void Service::OnHeartbeatError(CO_Data *d, uint8_t heartbeatID)
 {
     qDebug() << "Heartbeat error on node"<< (int)heartbeatID;
@@ -393,7 +403,8 @@ UNS32 Service::callback(CO_Data *d, const indextable *table, UNS8 bSubindex)
     if (item != nullptr)
     {
         item->result = data;
-        sem_post(item->sem);
+        // sem_post(item->sem);
+        item->sem->release();
     }
 
     return 0;

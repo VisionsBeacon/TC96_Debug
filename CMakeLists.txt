@@ -46,6 +46,25 @@ set_target_properties(appTC96_Debug PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+add_subdirectory(log)
+add_subdirectory(third_party)
+add_subdirectory(eds)
+add_subdirectory(Executor)
+add_subdirectory(Config)
+add_subdirectory(CustomControls)
+add_subdirectory(HcControls)
+
+
+
+# 添加 third_party 的头文件目录，确保能包含 third_party 的头文件
+target_include_directories(appTC96_Debug PRIVATE
+    ${CMAKE_SOURCE_DIR}/third_party/include/win32
+    ${CMAKE_SOURCE_DIR}/third_party/include
+)
+
+# 添加 eds 的头文件目录，确保能包含 eds 的头文件
+target_include_directories(appTC96_Debug PRIVATE ${CMAKE_SOURCE_DIR}/eds)
+
 target_link_libraries(appTC96_Debug
     PRIVATE Qt6::Core
     PRIVATE Qt6::Quick
@@ -53,21 +72,13 @@ target_link_libraries(appTC96_Debug
     PRIVATE Qt6::Widgets
     PRIVATE Qt6::Network
     PRIVATE Qt6::Gui
-    Configplugin
-    CustomControlsplugin
     Log
     third_party
     eds
     Executor
+    Configplugin
+    CustomControlsplugin
 )
-
-add_subdirectory(Config)
-add_subdirectory(CustomControls)
-add_subdirectory(log)
-add_subdirectory(HcControls)
-add_subdirectory(eds)
-add_subdirectory(Executor)
-add_subdirectory(third_party)
 
 include(GNUInstallDirs)
 install(TARGETS appTC96_Debug

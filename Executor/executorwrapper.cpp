@@ -1,11 +1,7 @@
 #include "executorwrapper.h"
-
-#include <errno.h>
-#include <list>
 #include "acturator.h"
-#include "canfestival.h"
-
 #include "waiting_list.h"
+
 
 static bool is_running(int can_id, int index, int sub_index)
 {
@@ -22,20 +18,21 @@ bool ExecutorWrapper::in_process()
 
 void ExecutorWrapper::set_processing()
 {
-    wait_item item = {can_id, this->index, this->status, &(this->sem)};
+    wait_item item = {can_id, this->index, this->status, &(this->m_sem)};
     insert_wait_item(item);
 }
 
 int ExecutorWrapper::wait_result()
 {
     set_processing();
-    sem_wait(&(this->sem));
+    // sem_wait(&(this->sem));
+    m_sem.acquire();
     return set_finished();
 }
 
 int ExecutorWrapper::set_finished()
 {
-    wait_item item = {this->can_id, this->index, this->status, &(this->sem)};
+    wait_item item = {this->can_id, this->index, this->status, &(this->m_sem)};
     remove_wait_item(item);
     // qDebug() << "Result wait item " << item.result << endl;
     return item.result;
@@ -65,7 +62,8 @@ int ExecutorWrapper::run(const QString &args)
         return -EFAULT;
     }
 
-    sem_wait(&(this->sem));
+    // sem_wait(&(this->sem));
+    m_sem.acquire();
     return set_finished();
 }
 
@@ -93,7 +91,8 @@ int ExecutorWrapper::write_param(int param, int32_t value)
     // qDebug() << " setRunning ret" << ret;
     if(ret == 0)
     {
-        sem_wait(&(this->sem));
+        // sem_wait(&(this->sem));
+        m_sem.acquire();
         return set_finished();
     }
 

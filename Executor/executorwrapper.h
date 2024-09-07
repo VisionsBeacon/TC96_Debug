@@ -1,17 +1,16 @@
 #pragma once
-#include <semaphore.h>
 
 #include <QObject>
-
+#include <QSemaphore>
 
 class ExecutorWrapper : public QObject
 {
     Q_OBJECT
 public:
     ExecutorWrapper(int can_id, const QString &name, const QString &request, QObject *parent = nullptr)
-        : QObject{parent}, can_id(can_id), name(name), request(request)
+        : QObject{parent}, can_id(can_id), name(name), request(request), m_sem(0)
     {
-        sem_init(&(this->sem), 0, 0);
+
     }
 
     virtual int run(const QString &args);       //运行控制命令
@@ -31,7 +30,7 @@ public:
 protected:
     QString name;
     QString request;
-    sem_t sem;
+    QSemaphore m_sem;
 
 protected:
     int index;

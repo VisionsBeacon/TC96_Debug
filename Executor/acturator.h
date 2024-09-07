@@ -1,23 +1,22 @@
 // 包含一次
 #pragma once
 
-#include <QObject>
+#include <QObject>  //此处如果改为#include <QString>会报错
+#include <QMutex>
+#include <QSemaphore>
+#include <vector>
 
 #include "acturator_args.h"
 
-#include <semaphore.h>
-#include <memory>
-#include <QMutex>
-#include <vector>
 
-#include <QDebug>
-
-class Actuator : public QObject
+class Actuator
 {
-    // Q_OBJECT
+
+//此处如果添加Q_OBJECT会报错
+
 public:
-    Actuator(int can_id, const QString &name = "None", int index = 0x2600, QObject *parent = nullptr)
-        : QObject(parent), can_id(can_id), name(name), index(index)
+    Actuator(int can_id, const QString &name = "None", int index = 0x2600)
+        : can_id(can_id), name(name), index(index)
     {
 
     }
@@ -28,7 +27,7 @@ public:
     {
         for (auto i : value)
         {
-            qDebug() << this->name << " setArgs" << i->data();
+            // qDebug() << this->name.c_str() << " setArgs" << i->data() << endl;
         }
 
         return 0;
@@ -39,16 +38,16 @@ public:
     virtual int readSDO(int index, int sub_index, int type, int size, void *data);
     virtual int setRunning();
 
-protected:
-    int can_id;
-    QString name;
-    int index;
-
 private:
     static QMutex m_mutex;
     static bool sdo_success;
 
     //指向信号量的指针
-    static sem_t *semW;
-    static sem_t *semR;
+    static QSemaphore* semW;
+    static QSemaphore* semR;
+
+protected:
+    int can_id;
+    QString name;
+    int index;
 };

@@ -18,7 +18,8 @@
 extern "C" {
 #endif
 
-#include "../third_party/include/win32/canfestival.h"
+#include "canfestival.h"
+#include "eds_master.h"
 
 #ifdef __cplusplus
 };
@@ -84,6 +85,7 @@ public:
 public:
     explicit Service(QObject *parent = nullptr);
     static Service* instance();
+    void init();
     void initConnect();
     void CanopenInit();
     void InitSdoClients();
@@ -101,6 +103,8 @@ signals:
 private slots:
     //异步调用
     void onAsyncComplete(FUNNAME, QJsonObject);
+    //开启can服务
+    void onSigStartLanServer();
 
 private:
     static Service* m_Ctrl;

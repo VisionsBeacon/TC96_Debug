@@ -52,7 +52,8 @@ int RdmlExecutorWrapper::write_rdml_data(const char *rdml, int size)
 
     if (ret == 0)
     {
-      sem_wait(&sem);
+      // sem_wait(&sem);
+        m_sem.acquire();
     }
 
     if (ret != 0)

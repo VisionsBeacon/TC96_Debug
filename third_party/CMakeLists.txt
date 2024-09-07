@@ -13,3 +13,7 @@ include_directories(
 add_library(third_party STATIC
     ${third_party_src}
 )
+
+if(WIN32)
+    target_link_libraries(third_party ws2_32)
+endif()

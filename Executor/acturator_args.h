@@ -1,6 +1,8 @@
 #pragma once
 
-#include <QString>
+
+#include <string.h>
+#include <iostream>
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,13 +10,17 @@ extern "C" {
 
 #include "canfestival.h"
 
+//防止def.h中的Tx与qmath.h中的Tx混乱
+// #undef Tx
+
 #ifdef __cplusplus
 };
 #endif
 
-class args_item {
+class args_item
+{
 public:
-    QString name;
+    std::string name;
     int index;
     int sub_index;
     int data_type;
@@ -25,14 +31,13 @@ public:
     virtual int get_data_type() { return 0; }
 };
 
-
-
-class args_int : public args_item {
+class args_int : public args_item
+{
 private:
     int value;
 
 public:
-    args_int(const QString &name, int index, int sub_index, int data) {
+    args_int(const std::string &name, int index, int sub_index, int data) {
         this->name = name;
         this->index = index;
         this->sub_index = sub_index;
@@ -43,14 +48,13 @@ public:
     int get_data_type() { return uint32; }
 };
 
-
-
-class args_array : public args_item {
+class args_array : public args_item
+{
 private:
     uint8_t value[32];
 
 public:
-    args_array(const QString &name, int index, int sub_index, void *data) {
+    args_array(const std::string &name, int index, int sub_index, void *data) {
         this->name = name;
         this->index = index;
         this->sub_index = sub_index;

@@ -4,16 +4,16 @@ project(eds LANGUAGES C)
 
 file(GLOB_RECURSE eds_src "./*.c" "./*.h")
 
-# 添加头文件，方便包含头文件
-include_directories(
-    ../third_party/include/win32
-    ../third_party/include/
-)
-
 add_library(eds STATIC
     ${eds_src}
 )
 
+# 添加第三方库头文件，方便包含头文件
+target_include_directories(eds PRIVATE
+    ${CMAKE_SOURCE_DIR}/third_party/include/win32
+    ${CMAKE_SOURCE_DIR}/third_party/include
+)
+
 target_link_libraries(eds
-    third_party
+    PRIVATE third_party
 )

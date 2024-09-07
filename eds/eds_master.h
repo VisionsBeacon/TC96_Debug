@@ -3,7 +3,7 @@
 #ifndef EDS_MASTER_H
 #define EDS_MASTER_H
 
-#include "../third_party/include/data.h"
+#include "data.h"
 
 /* Prototypes of function provided by object dictionnary */
 UNS32 eds_master_valueRangeTest (UNS8 typeValue, void * value);

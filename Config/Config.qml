@@ -74,7 +74,7 @@ Item {
     property int currentIndex: 0
 
 
-
+    /*******************************信号*********************************/
 
 
     //设备按钮点击信号
@@ -107,10 +107,10 @@ Item {
             console.log(qsTr("使用Lan连接模式"))
 
             //读取配置文件
-            DataHandler.loadingDevicesConfig()
+            // DataHandler.loadingDevicesConfig()
 
             //启动Lan服务
-
+            DataHandler.startLanServer()
 
         }
     }
