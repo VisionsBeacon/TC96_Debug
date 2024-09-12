@@ -13,9 +13,9 @@ public:
 
     }
 
-    virtual int run(const QString &args);       //运行控制命令
-    int  write_param(int param, int32_t value);      //写参数
-    int read_param(int param, int32_t &value);       //读参数
+    virtual int run(const QString &args);           //运行控制命令
+    int  write_param(int param, int32_t value);     //写参数
+    int read_param(int param, int32_t &value);      //读参数
 
     virtual int write_data(int paramName,int32_t value)
     {

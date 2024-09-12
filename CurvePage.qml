@@ -6,6 +6,7 @@ import QtCharts
 import HcControls
 import CustomControls
 import Config
+import DataHandler 1.0
 
 Rectangle {
     id: root
@@ -91,31 +92,34 @@ Rectangle {
     }
 
     //读取温度
-    // Connections {
-    //     target: HttpClient
+    Connections {
+        target: DataHandler
 
-    //     function onSandTemperature(device, temperature) {
-    //         if(!showLine || device !== deviceName) {
-    //             return
-    //         } else {
-    //             x_Axis += 2
-    //             if(x_Axis > xAxis.max) {
-    //                 xAxis.max = x_Axis
-    //             }
+        function onSigSendTemperature(device, temperatureList) {
+            if(!showLine || device !== deviceName) {
+                return
+            } else {
+                x_Axis += 2
+                if(x_Axis > xAxis.max) {
+                    xAxis.max = x_Axis
+                }
 
-    //             root.block1Line.append(x_Axis, temperature);
-    //         }
-    //     }
-    // }
+                root.block1Line.append(x_Axis, temperatureList[0]);
+                root.block2Line.append(x_Axis, temperatureList[1]);
+                root.block3Line.append(x_Axis, temperatureList[2]);
+                root.heatLidLine.append(x_Axis, temperatureList[3]);
+            }
+        }
+    }
 
     onShowLineChanged: {
         if(!showLine) {
             //关闭曲线
-            Config.removeShowLineDevices(deviceName)
+            Config.removeShowLineDevices(deviceCanId)
             clearAllLines()
         } else {
             //开启曲线
-            Config.addShowLineDevices(deviceName)
+            Config.addShowLineDevices(deviceCanId)
         }
     }
 

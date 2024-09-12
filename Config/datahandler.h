@@ -1,5 +1,6 @@
 #ifndef DATAHANDLER_H
 #define DATAHANDLER_H
+#include "signalmanager.h"
 
 #include <QObject>
 #include <QFuture>
@@ -22,28 +23,22 @@ public:
 
     //加载配置文件
     Q_INVOKABLE void loadingDevicesConfig();
-
     //获取设备名称与id的map
     Q_INVOKABLE QVariantMap getDeviceMap() const;
-
     //开启Lan服务
     Q_INVOKABLE void startLanServer();
-
     //发送Can指令
-    Q_INVOKABLE void sendCommand(int canId, int commandType, const QString &rdmlJson);
+    Q_INVOKABLE void sendCommand(int canId, int commandType, const QString &paramsJson);
 
 
     /***************************正常函数***************************/
 
     //解析配置文件
     bool parseDevicesConfig();
-
     //根据设备名称返回id
     int getCanIdForDevice(const QString &name);
-
     //根据设备id返回名称
     QString getDeviceNameById(int id);
-
     QString zlg_can_ip() const;
 
 signals:
@@ -51,12 +46,23 @@ signals:
     void parseDevicesConfigCompleted(bool);
     //打开Lan服务结果
     void sigResultStartLanServer(bool);
+    //发送动作执行结果给UI
+    void sendActionResult(const QString &msg);
+    //发送温度
+    void sigSendTemperature(const QString &deviceName, const QVariantList &temperatureList);
+    //发送参数
+    void sigSendParams(const QString &deviceName, const Data &data);
 
 private slots:
     void onFinished();
-
     //接收开启Lan服务结果
     void onSigResultStartLanServer(bool result);
+    //接收动作执行结果
+    void onSendActionResult(const QString &msg);
+    //接收温度
+    void onSigSendTemperature(const QString &deviceName, const QVariantList &temperatureList);
+    //接收参数
+    void onSigSendParams(const QString &deviceName, const Data &data);
 
 
 private:

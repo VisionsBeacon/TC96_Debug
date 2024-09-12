@@ -5,7 +5,6 @@
 class CanParamWrapper:public ExecutorWrapper
 {
 public:
-
     CanParamWrapper(int can_id, const QString &name);
     int write_data(int paramName, int32_t value);
     int read_data(int paramName, int32_t &value);

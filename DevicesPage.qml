@@ -18,7 +18,16 @@ Rectangle {
 
     /*******************功能组件/函数*******************/
 
+    //接收动作执行结果
+    Connections {
+        target: DataHandler
 
+        function onSendActionResult(msg) {
+            var dlg = HcMessageDlg.createMessageDlg(mainWindow, msg)
+            dlg.onlyConfirm = true
+            dlg.open()
+        }
+    }
 
 
 
@@ -73,13 +82,10 @@ Rectangle {
                                     }
 
                                     console.log("设备名称：", Config.currentCheckedDeviceName, "，执行动作：", column.children[i].text);
-
                                     //添加日志
                                     OperateLogManager.addNewOperationRecord(Config.currentCheckedDeviceName, column.children[i].text)
-
                                     //发送can指令
                                     Config.executeCommand(Config.currentCheckedDeviceCanId, column.children[i].text, rdmlJson)
-
                                     break;
                                 }
                             }

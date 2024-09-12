@@ -584,13 +584,13 @@ Rectangle {
 
     //转为RDML结构
     function toRdml() {
-        var jsonStr = "{\n\t\"thermalCyclingConditions\": {\n\t\t"
+        var jsonStr = "{\"thermalCyclingConditions\": {"
         var nr = 1
 
-        jsonStr += "\"id\": \"\"" + "," + "\n\t\t"
-        jsonStr += "\"lidTemperature\": " + control.lidTemp + "," + "\n\t\t"
-        jsonStr += "\"reactVolume\": " + control.reactVol + "," + "\n\t\t"
-        jsonStr += "\"step\": " + "[\n\t\t\t{\n\t\t\t\t"
+        jsonStr += "\"id\": \"\"" + ","
+        jsonStr += "\"lidTemperature\": " + control.lidTemp + ","
+        jsonStr += "\"reactVolume\": " + control.reactVol + ","
+        jsonStr += "\"step\": " + "[{"
 
         for (var i = 0; i < control.pcrStageModel.count; i++) {
             var stage = control.pcrStageModel.get(i)
@@ -600,25 +600,25 @@ Rectangle {
                 for (var j = 0; j < stage.pcrStepModel.count; j++) {
                     var step = stage.pcrStepModel.get(j)
 
-                    jsonStr += "\"nr\": " + nr + "," + "\n\t\t\t\t"
-                    jsonStr += "\"description\": " + getDescription(i, j, stage.type) + "," + "\n\t\t\t\t"
-                    jsonStr += "\"temperature\": " + "{\n\t\t\t\t\t"
-                    jsonStr += "\"temperature\": " + step.endTemp + "," + "\n\t\t\t\t\t"
-                    jsonStr += "\"duration\": " + getSeconds(step.hours, step.minutes, step.seconds, stage.type) + "," + "\n\t\t\t\t\t"
-                    jsonStr += "\"temperatureChange\": " + 0 + "," + "\n\t\t\t\t\t"
-                    jsonStr += "\"durationChange\": " + 0 + "," + "\n\t\t\t\t\t"
-                    jsonStr += "\"measure\": " + getMessure(step.photographable, stage.type) + "," + "\n\t\t\t\t\t"
-                    jsonStr += "\"ramp\": " + step.ratio + "\n\t\t\t\t}"
-                    jsonStr += "\n\t\t\t},\n\t\t\t{\n\t\t\t\t"
+                    jsonStr += "\"nr\": " + nr + ","
+                    jsonStr += "\"description\": \"" + getDescription(i, j, stage.type) + "\","
+                    jsonStr += "\"temperature\": " + "{"
+                    jsonStr += "\"temperature\": " + step.endTemp + ","
+                    jsonStr += "\"duration\": " + getSeconds(step.hours, step.minutes, step.seconds, stage.type) + ","
+                    jsonStr += "\"temperatureChange\": " + 0 + ","
+                    jsonStr += "\"durationChange\": " + 0 + ","
+                    jsonStr += "\"measure\": \"" + getMessure(step.photographable, stage.type) + "\","
+                    jsonStr += "\"ramp\": " + step.ratio + "}"
+                    jsonStr += "},{"
 
                     nr++
                 }
 
                 if (repeat >= 0) {
-                    jsonStr += "\"nr\": " + nr + "," + "\n\t\t\t\t"
-                    jsonStr += "\"loop\": " + "{\n\t\t\t\t\t"
-                    jsonStr += "\"goto\": " + (nr - stage.pcrStepModel.count) + "," + "\n\t\t\t\t\t"
-                    jsonStr += "\"repeat\": " + repeat + "\n\t\t\t\t}"
+                    jsonStr += "\"nr\": " + nr + ","
+                    jsonStr += "\"loop\": " + "{"
+                    jsonStr += "\"goto\": " + (nr - stage.pcrStepModel.count) + ","
+                    jsonStr += "\"repeat\": " + repeat + "}"
 
                     nr++
                 } else {
@@ -628,17 +628,17 @@ Rectangle {
 
             if (i < control.pcrStageModel.count - 1) {
                 if (control.pcrStageModel.get(i + 1).pcrStepModel.count > 0) {
-                    jsonStr += "\n\t\t\t},\n\t\t\t{\n\t\t\t\t"
+                    jsonStr += "},{"
                 } else {
                     continue
                 }
 
             } else {
-                jsonStr += "\n\t\t\t}\n\t\t]\n\t}"
+                jsonStr += "}]}"
             }
         }
 
-        jsonStr += "\n}"
+        jsonStr += "}"
 
         return jsonStr
     }

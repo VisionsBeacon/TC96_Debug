@@ -6,7 +6,7 @@
 #include "executorfactory.h"
 
 
-
+#include <QRandomGenerator>
 #include <QThread>
 
 // #include <QtConcurrent/QtConcurrent>
@@ -50,7 +50,6 @@ void Service::init()
 
 void Service::initConnect()
 {
-    connect(this, &Service::AsyncComplete, this, &Service::onAsyncComplete);
     connect(sigManager, &SignalManager::sigStartLanServer, this, &Service::onSigStartLanServer);
     connect(sigManager, &SignalManager::sigSendNormalCanCommand, this, &Service::onSigSendNormalCanCommand);
 }
@@ -120,197 +119,645 @@ void Service::InterfaceComplete(FUNNAME funName, QJsonObject param)
     QString can_id = param["can_id"].toString();
     QString name = DataHandler::getInstance()->getDeviceNameById(can_id.toInt());
 
+    QString actionName = "";
+    QString excuteResult = "成功";
+
     switch(funName)
     {
     case FUN_RESET:
     {
+        actionName = "复位";
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "reset");
 
-        //运行
-        std::string result = "成功";
         if (e != nullptr)
         {
             if(e->run(param["param"].toString()) != 0)
             {
-                result = "失败";
+                excuteResult = "失败";
             }
         }
         else
         {
-            result = "设备不在线";
+            excuteResult = "设备不在线";
         }
-        // QString func="初始化 ";
-        // SignalManager::instance()->AddMessage(func+result.c_str());
+
         break;
     }
     case FUN_START:
     {
+        actionName = "方案运行";
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "start");
 
-        // 运行
-        std::string result = "成功";
         if(e != nullptr)
         {
             if(e->run(param["param"].toString()) != 0)
             {
-                result = "失败";
+                excuteResult = "失败";
             }
         }
         else
         {
-            result = "设备不在线";
+            excuteResult = "设备不在线";
         }
-
-        // QString func="方案运行 ";
-        // SignalManager::instance()->AddMessage(func+result.c_str());
         break;
     }
     case FUN_STOP:
     {
+        actionName = "方案停止";
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "stop");
 
-        //运行
-        std::string result = "成功";
         if(e != nullptr)
         {
             if(e->run(param["param"].toString()) != 0)
             {
-                result = "失败";
+                excuteResult = "失败";
             }
         }
         else
         {
-            result = "设备不在线";
+            excuteResult = "设备不在线";
         }
-        // QString func="方案停止 ";
-        // SignalManager::instance()->AddMessage(func+result.c_str());
+
         break;
     }
     case FUN_LID_OPEN:
     {
+        actionName = "开盖";
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "lid_open");
 
-        //下发指令
-        std::string result = "成功";
         if (e != nullptr)
         {
             if(e->run(param["param"].toString()) != 0)
             {
-                result = "失败";
+                excuteResult = "失败";
             }
         }
         else
         {
-            result = "设备不在线";
+            excuteResult = "设备不在线";
         }
 
-        // QString func = "开盖 ";
-        // SignalManager::instance()->AddMessage(func + result.c_str());
         break;
     }
     case FUN_LID_CLOSE:
     {
+        actionName = "关盖";
         auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "lid_close");
 
-        // 运行
-        std::string result = "成功";
         if(e != nullptr)
         {
             if(e->run(param["param"].toString()) != 0)
             {
-                result = "失败";
+                excuteResult = "失败";
             }
 
         }
         else
         {
-            result = "设备不在线";
+            excuteResult = "设备不在线";
         }
-        // QString func="关盖 ";
-        // SignalManager::instance()->AddMessage(func+result.c_str());
+
+        break;
+    }
+    case FUN_HEAT_LID_ON:
+    {
+        break;
+    }
+    case FUN_HEAT_LID_OFF:
+    {
+        break;
+    }
+    case FUN_SET_RDML:
+    {
+        actionName = "方案设置";
+        auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "set_schema");
+
+        if (e != nullptr)
+        {
+            if(e->run(param["param"].toString()) != 0)
+            {
+                excuteResult = "失败";
+            }
+        }
+        else
+        {
+            excuteResult = "设备不在线";
+        }
+
         break;
     }
     case FUN_SET_PARAM:
     {
+        actionName = "设置参数";
+
         auto e1 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "heatlidpid");
         auto e2 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "blockpid");
         auto e3 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "basicparam");
-        auto e4 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "canparam");
         auto e5 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "calibratecompensation");
         auto e6 = ExecutorFactory::Instance().CreateExecutorWrapper(name, "cyclingcompensation");
 
         //取出需要写的值
-        QJsonObject value = param["param"].toObject();
-        int32_t block_kp = value["block_kp"].toInt();
-        int32_t block_kd = value["block_kd"].toInt();
-        int32_t block_ki = value["block_ki"].toInt();
-        double lid_move_distance = value["lid_distance"].toString().toDouble();
+        QString paramStr = param["param"].toString();
+        QJsonDocument paramDoc = QJsonDocument::fromJson(paramStr.toUtf8());
+        QJsonObject paramObj = paramDoc.object();
 
-        //int32_t can_id=value["can_id"].toInt();
-        int32_t baundrate = value["baundrate"].toInt();
-        int32_t block1 = value["block1"].toInt();
-        int32_t block2 = value["block2"].toInt();
-        int32_t block3 = value["block3"].toInt();
-        int32_t heatLid = value["heatLid"].toInt();
-        int32_t radiator = value["radiator"].toInt();
-        int32_t k = value["k"].toInt();
-        int32_t b = value["b"].toInt();
-        int32_t heatlid_kp = value["heatlid_kp"].toInt();
-        int32_t heatlid_ki = value["heatlid_ki"].toInt();
-        int32_t heatlid_kd = value["heatlid_kd"].toInt();
-        // 运行
-        std::string result1,result2,result3,result4,result5,result6 = "OK";
+        //热盖PID
+        int32_t heatlid_kp = paramObj["heatlid_kp"].toInt();
+        int32_t heatlid_ki = paramObj["heatlid_ki"].toInt();
+        int32_t heatlid_kd = paramObj["heatlid_kd"].toInt();
 
-        if(e3 != nullptr)
+        //加热块PID
+        int32_t block_kp = paramObj["block_kp"].toInt();
+        int32_t block_kd = paramObj["block_kd"].toInt();
+        int32_t block_ki = paramObj["block_ki"].toInt();
+
+        //热盖距离
+        double lid_move_distance = paramObj["lid_distance"].toString().toDouble();
+
+        //传感器温度补偿、热盖温度补偿
+        int32_t block1 = paramObj["block1"].toInt();
+        int32_t block2 = paramObj["block2"].toInt();
+        int32_t block3 = paramObj["block3"].toInt();
+        int32_t heatLid = paramObj["heatLid"].toInt();
+
+        //温控补偿
+        int32_t k = paramObj["k"].toInt();
+        int32_t b = paramObj["b"].toInt();
+
+        //热盖PID
+        if (e1 != nullptr)
         {
-            if(e3->write_data(0,lid_move_distance*1000) != 0)
+            if (e1->write_data(0, heatlid_kp * 1000) != 0)
             {
-                result3 = "FAILED";
+                excuteResult = "失败";
             }
             else
             {
                 QThread::msleep(200);
             }
 
-        }
-        else
-        {
-            result3 = "NO_DEVICE";
-        }
-        break;
-    }
-    case FUN_SET_RDML:
-    {
-        auto e = ExecutorFactory::Instance().CreateExecutorWrapper(name, "set_schema");
-
-        // 运行
-        std::string result = "成功K";
-        if (e != nullptr)
-        {
-
-            if(e->run(QString(QJsonDocument(param["param"].toObject()).toJson(QJsonDocument::Compact))) != 0)
+            if (e1->write_data(1, heatlid_ki * 1000) != 0)
             {
-                result = "失败";
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
             }
 
+            if (e1->write_data(2, heatlid_kd * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
         }
         else
         {
-            result = "设备不在线";
+            excuteResult = "设备不在线";
         }
-        // QString func="方案设置 ";
-        // SignalManager::instance()->AddMessage(func+result.c_str());
+
+        //加热块PID
+        if (e2 != nullptr)
+        {
+            if (e2->write_data(0, block_kp * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+
+            if (e2->write_data(1, block_ki * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+
+            if (e2->write_data(2, block_kd * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+        }
+        else
+        {
+            excuteResult = "设备不在线";
+        }
+
+        //热盖距离
+        if(e3 != nullptr)
+        {
+            if(e3->write_data(0, lid_move_distance * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+        }
+        else
+        {
+            excuteResult = "设备不在线";
+        }
+
+        //传感器温度补偿、热盖温度补偿
+        if (e5 != nullptr) {
+            if (e5->write_data(0, block1 * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+            if (e5->write_data(1, block2 * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+
+            if (e5->write_data(2, block3 * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+            if (e5->write_data(3, heatLid * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+        }
+        else
+        {
+            excuteResult = "设备不在线";
+        }
+
+        //温控补偿
+        if (e6 != nullptr)
+        {
+            if (e6->write_data(0, k * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+
+            if (e6->write_data(1, b * 1000) != 0)
+            {
+                excuteResult = "失败";
+            }
+            else
+            {
+                QThread::msleep(200);
+            }
+        }
+        else
+        {
+            excuteResult = "设备不在线";
+        }
+
         break;
+    }
+    case FUN_READ_PARAM:
+    {
+        actionName = "获取参数";
+        excuteResult = "结果";
+        getParams(name);
+
+        //这里为return是为了暂时过滤获取参数结果，没什么好返回的
+        return;
+    }
+    case FUN_TEMPERATURE:
+    {
+        actionName = "温度";
+        excuteResult = "结果";
+        getTemperature(name);
+
+        //这里为return是为了暂时过滤温度结果，没什么好返回的
+        return;
     }
     default:
         break;
     }
+
+    Q_EMIT sigManager->sendActionResult(actionName + excuteResult);
 }
 
-void Service::onAsyncComplete(FUNNAME name, QJsonObject var)
+//读取温度
+void Service::getTemperature(const QString &deviceName)
 {
-    //qDebug() << "接口调用:" << name << "参数：" << var;
-    // QtConcurrent::run(this, &Service::InterfaceComplete, name, var);
+    //读取温度值
+    int32_t valueTemperature1 = 8888;
+    int32_t valueTemperature2 = 8888;
+    int32_t valueTemperature3 = 8888;
+    int32_t valueTemperature4 = 8888;
+    int32_t valueTemperature5 = 8888;
+
+    //创建了一个Temperatures类
+    auto e = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "temperature");
+
+    if (e != nullptr)
+    {
+        // //用于自测的随机温度值
+        // QRandomGenerator *randomGenerator = QRandomGenerator::global();
+
+        // // 生成随机温度值，范围在20到100摄氏度之间
+        // valueTemperature1 = randomGenerator->bounded(20000, 100000);
+        // valueTemperature2 = randomGenerator->bounded(20000, 100000);
+        // valueTemperature3 = randomGenerator->bounded(20000, 100000);
+        // valueTemperature4 = randomGenerator->bounded(20000, 100000);
+        // valueTemperature5 = randomGenerator->bounded(20000, 100000);
+
+        if(e->read_data(0, valueTemperature1) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            //加一个延时，避免信号量阻塞未取到值
+            QThread::msleep(200);
+        }
+
+        if(e->read_data(1, valueTemperature2) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if(e->read_data(2, valueTemperature3) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if(e->read_data(3, valueTemperature4) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if(e->read_data(4, valueTemperature5) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+
+    }
+
+    //处理一些异常数据
+    if(valueTemperature1 == 8888)
+    {
+        valueTemperature1 = valueTemperature2;
+    }
+    if(valueTemperature2 == 8888)
+    {
+        valueTemperature2 = valueTemperature3;
+    }
+
+    QVariantList vec_res;
+    vec_res.append(valueTemperature1 / 1000);
+    vec_res.append(valueTemperature2 / 1000);
+    vec_res.append(valueTemperature4 / 1000);
+    vec_res.append(valueTemperature3 / 1000);
+    vec_res.append(valueTemperature5 / 1000);
+
+    Q_EMIT sigManager->sigSendTemperature(deviceName, vec_res);
+}
+
+//获取参数
+void Service::getParams(const QString &deviceName)
+{
+    Data data;
+
+    auto e1 = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "heatlidpid");
+    auto e2 = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "blockpid");
+    auto e3 = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "basicparam");
+    auto e4 = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "canparam");
+    auto e5 = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "calibratecompensation");
+    auto e6 = ExecutorFactory::Instance().CreateExecutorWrapper(deviceName, "cyclingcompensation");
+
+    if(e1 != nullptr)
+    {
+        if(e1->read_data(0, data.heatlid_kp) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+        if(e1->read_data(1, data.heatlid_ki) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if(e1->read_data(2, data.heatlid_kd) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+        //设备不在线
+    }
+
+    if (e2 != nullptr)
+    {
+        if(e2->read_data(0, data.block_kp) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+        if(e2->read_data(1, data.block_ki) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if(e2->read_data(2, data.block_kd) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+        //设备不在线
+    }
+
+    if (e3 != nullptr)
+    {
+        if (e3->read_data(0, data.lid_move_distance) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+        //设备不在线
+    }
+
+    if (e4 != nullptr)
+    {
+        if (e4->read_data(0, data.can_id) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if (e4->read_data(1, data.baundrate) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+        //设备不在线
+    }
+
+    if (e5 != nullptr)
+    {
+        if (e5->read_data(0, data.block1) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if (e5->read_data(1, data.block2) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if (e5->read_data(2, data.block3) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if (e5->read_data(3, data.heatLid) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if (e5->read_data(4, data.radiator) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+        //设备不在线
+    }
+
+    if (e6 != nullptr)
+    {
+        if (e6->read_data(0, data.k) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+
+        if (e6->read_data(1, data.b) != 0)
+        {
+            //获取失败
+        }
+        else
+        {
+            QThread::msleep(200);
+        }
+    }
+    else
+    {
+        //设备不在线
+    }
+
+    Q_EMIT sigManager->sigSendParams(deviceName, data);
 }
 
 //开启can服务
@@ -323,7 +770,7 @@ void Service::onSigStartLanServer()
 void Service::onSigSendNormalCanCommand(int commandType, const QJsonObject &obj)
 {
     auto future = QtConcurrent::run([this, commandType, obj]() {
-        this->InterfaceComplete(static_cast<FUNNAME>(commandType), obj);
+        InterfaceComplete(static_cast<FUNNAME>(commandType), obj);
     });
 }
 
@@ -371,7 +818,7 @@ void Service::ProcessEvents(int canID,int event)
         }
         else
         {
-            // QThread::msleep(200);  //延迟; //加一个延时，避免信号量阻塞未取到值
+            QThread::msleep(200);  //延迟; //加一个延时，避免信号量阻塞未取到值
         }
     }
 

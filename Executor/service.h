@@ -28,7 +28,7 @@ extern "C" {
 
 //tc96 控制功能枚举
 enum FUNNAME {
-    FUN_RESET=0,        //复位
+    FUN_RESET = 0,        //复位
     FUN_START,          //方案开始运行
     FUN_STOP,           //方案停止
     FUN_LID_OPEN,       //开盖
@@ -36,31 +36,9 @@ enum FUNNAME {
     FUN_HEAT_LID_ON,    //热盖
     FUN_HEAT_LID_OFF,   //热盖关
     FUN_SET_RDML,       //设置方案
-
-    FUN_SET_PARAM,
-    FUN_READ_PARAM,
-    FUN_TEMPERATURE,
-
-
-//    FUN_SET_BLOCKPID,//加热片PID
-//    FUN_SET_HEATLIDPID,
-//    FUN_SET_BASICPARAMS,
-//    FUN_SET_CANPARAMS,
-//    FUN_SET_CALIBRATE,
-//    FUN_SET_COMPENSATION,//控制参数
-
-//    FUN_READ_BLOCKPID,
-//    FUN_READ_HEATLIDPID,
-//    FUN_READ_BASICPARAMS,
-//    FUN_READ_CANPARAMS,
-//    FUN_READ_CALIBRATE,
-//    FUN_READ_COMPENSATION,
-    
-//    FUN_READ_TEMPERATURE1,
-//    FUN_READ_TEMPERATURE2,
-//    FUN_READ_TEMPERATURE3,
-//    FUN_READ_TEMPERATURE4,
-//    FUN_READ_TEMPERATURE5,
+    FUN_SET_PARAM,      //设置参数
+    FUN_READ_PARAM,     //获取参数
+    FUN_TEMPERATURE,    //获取温度
 };
 
 class Service : public QObject
@@ -90,6 +68,10 @@ public:
     void CanopenInit();
     void InitSdoClients();
     void RegCallbacks(CO_Data* d);
+    //读取温度
+    void getTemperature(const QString &deviceName);
+    //获取参数
+    void getParams(const QString &deviceName);
     static UNS32 callback(CO_Data* d,const indextable *table,UNS8 bSubindex);
     static UNS32 warning_callback(CO_Data *d, const indextable *table, UNS8 bSubindex);
     static void OnHeartbeatError(CO_Data* d,UNS8 heartbeatID);
@@ -97,12 +79,9 @@ public:
     static void ProcessEvents(int canId,int event);
 
 signals:
-    void AsyncComplete(FUNNAME, QJsonObject);
     void ReadTemperature();
 
 private slots:
-    //异步调用
-    void onAsyncComplete(FUNNAME, QJsonObject);
     //开启can服务
     void onSigStartLanServer();
     //接收can指令

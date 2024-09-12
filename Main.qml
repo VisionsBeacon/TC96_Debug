@@ -37,6 +37,24 @@ Window {
         dlg.open()
     }
 
+    //接收读取配置文件结果
+    Connections {
+        target: DataHandler
+        function onParseDevicesConfigCompleted(result) {
+            if(!result) {
+                var msg = qsTr("读取配置文件失败！")
+                var dlg = HcMessageDlg.createMessageDlg(mainWindow, msg)
+                dlg.onlyConfirm = true
+
+                dlg.accepted.connect(function() {
+                    Qt.quit()
+                })
+
+                dlg.open()
+            }
+        }
+    }
+
     //接收是否连接上设备
     Connections {
         target: DataHandler

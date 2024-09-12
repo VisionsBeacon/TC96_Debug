@@ -1,5 +1,4 @@
 #include "datahandler.h"
-#include "signalmanager.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -27,6 +26,9 @@ void DataHandler::initConnect()
 {
     connect(&m_watcher, &QFutureWatcher<bool>::finished, this, &DataHandler::onFinished);
     connect(sigManager, &SignalManager::sigResultStartLanServer, this, &DataHandler::onSigResultStartLanServer);
+    connect(sigManager, &SignalManager::sendActionResult, this, &DataHandler::onSendActionResult);
+    connect(sigManager, &SignalManager::sigSendTemperature, this, &DataHandler::onSigSendTemperature);
+    connect(sigManager, &SignalManager::sigSendParams, this, &DataHandler::onSigSendParams);
 }
 
 DataHandler *DataHandler::getInstance()
@@ -131,25 +133,16 @@ void DataHandler::startLanServer()
 }
 
 //发送Can指令
-void DataHandler::sendCommand(int canId, int commandType, const QString &rdmlJson)
+void DataHandler::sendCommand(int canId, int commandType, const QString &paramsJson)
 {
-    if(rdmlJson.isEmpty())
-    {
-        //不发送方案的情况
-        QJsonObject jsonObject;
-        jsonObject.insert("can_id", QString::number(canId));
-        jsonObject.insert("param", "");
+    QJsonObject jsonObject;
+    jsonObject.insert("can_id", QString::number(canId));
 
-        Q_EMIT sigManager->sigSendNormalCanCommand(commandType, jsonObject);
-    }
-    else
-    {
-        //发送方案
+    //注意：param中的内容为QString，不是QJsonObject
+    jsonObject.insert("param", paramsJson);
 
-    }
-
+    Q_EMIT sigManager->sigSendNormalCanCommand(commandType, jsonObject);
 }
-
 
 
 
@@ -159,11 +152,29 @@ void DataHandler::sendCommand(int canId, int commandType, const QString &rdmlJso
 //接收读取配置文件结果
 void DataHandler::onFinished()
 {
-    // Q_EMIT parseDevicesConfigCompleted(m_watcher.result());
+    Q_EMIT parseDevicesConfigCompleted(m_watcher.result());
 }
 
 //接收开启Lan服务结果
 void DataHandler::onSigResultStartLanServer(bool result)
 {
     Q_EMIT sigResultStartLanServer(result);
+}
+
+//接收动作执行结果
+void DataHandler::onSendActionResult(const QString &msg)
+{
+    Q_EMIT sendActionResult(msg);
+}
+
+//接收温度
+void DataHandler::onSigSendTemperature(const QString &deviceName, const QVariantList &temperatureList)
+{
+    Q_EMIT sigSendTemperature(deviceName, temperatureList);
+}
+
+//接收参数
+void DataHandler::onSigSendParams(const QString &deviceName, const Data &data)
+{
+    Q_EMIT sigSendParams(deviceName, data);
 }

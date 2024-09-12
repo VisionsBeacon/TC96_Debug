@@ -15,6 +15,9 @@ RegisterToQml::RegisterToQml(QObject *parent)
     //初始化C++类
     sigManager;
 
+    //注册结构体
+    qRegisterMetaType<Data>("Data");
+
     //注册C++类
     qmlRegisterSingletonInstance<DataHandler>("DataHandler", 1, 0, "DataHandler", DataHandler::getInstance());
 

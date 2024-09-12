@@ -74,7 +74,7 @@ Item {
     //存储一对pcr组件与其canId
     property var pcrMap: {0: 0}
 
-    //存储当前开启曲线的设备名称
+    //存储当前开启曲线的设备Id
     property var currentShowLineDevices: []
 
     //当前读取温度的序号
@@ -180,8 +180,8 @@ Item {
     }
 
     //添加当前开启曲线的设备，并开启计时器
-    function addShowLineDevices(deviceName) {
-        currentShowLineDevices.push(deviceName)
+    function addShowLineDevices(deviceCanId) {
+        currentShowLineDevices.push(deviceCanId)
 
         if(currentShowLineDevices.length > 0 && !temperatureTimer.running) {
             temperatureTimer.running = true
@@ -189,15 +189,18 @@ Item {
     }
 
     //删除关闭曲线的设备，并关闭计时器
-    function removeShowLineDevices(deviceName) {
-        for(var device in currentShowLineDevices) {
-            if (device === deviceName) {
-                currentShowLineDevices.remove(deviceName)
+    function removeShowLineDevices(deviceCanId) {
+        let index = currentShowLineDevices.indexOf(deviceCanId);
+        if (index !== -1) {
+            currentShowLineDevices.splice(index, 1);  // 移除指定的元素
+            console.log("Removed deviceCanId:", deviceCanId);
 
-                if(currentShowLineDevices.length === 0) {
-                    temperatureTimer.running = false
-                }
+            if (currentShowLineDevices.length === 0) {
+                console.log("关闭计时器");
+                temperatureTimer.running = false;
             }
+        } else {
+            console.log("Device ID not found:", deviceCanId);
         }
     }
 
@@ -212,7 +215,7 @@ Item {
     /************************************** can接口 **************************************/
 
 
-    //下发can指令，参数1："TC01"，参数2："reset"
+    //下发can指令
     function executeCommand(deviceId, commandStr, rdmlJson) {
 
         var commandType = Config.CommandTypeNum.RESET
@@ -229,15 +232,20 @@ Item {
             commandType = Config.CommandTypeNum.START
         } else if(commandStr === "停止") {
             commandType = Config.CommandTypeNum.STOP
+        } else if(commandStr === "温度") {
+            commandType = Config.CommandTypeNum.TEMPERATURE
+        } else if(commandStr === "设置参数") {
+            commandType = Config.CommandTypeNum.SET_PARAM
+        } else if(commandStr === "获取参数") {
+            commandType = Config.CommandTypeNum.READ_PARAM
         }
 
-        console.log("deviceId: ", deviceId, ", commandType: ", commandType)
-
+        console.log("deviceId: ", deviceId, ", 执行动作：", commandStr)
         DataHandler.sendCommand(deviceId, commandType, rdmlJson)
     }
 
     //读取单个PCR温度
-    function getTemperature(deviceName) {
-        DataHandler.getTemperature(deviceName, "temperature")
+    function getTemperature(deviceCanId) {
+        executeCommand(deviceCanId, "温度", "")
     }
 }
